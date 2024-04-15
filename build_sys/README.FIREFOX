@@ -1,0 +1,22 @@
+# Prepare your system
+#
+#  The following commands/packages are required:
+#   curl, git
+#
+#  Ubuntu 20.04.1 LTS Live CD preparation example:
+
+sudo apt install curl git
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+source ~/.bashrc
+nvm install --lts 16
+
+# Build instructions
+# <sub_minor_version_number> is always the last number of the version nummer
+
+unzip source_for_firefox_release_....zip
+cd release
+npm install
+npm run build -- -v <sub_minor_version_number> -t firefox -c off
+npm run package -- -t firefox
+
+# If everything went well then the folder out/rel, respectively the file out/rel.xpi should contain the minified releasable source

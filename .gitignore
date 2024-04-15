@@ -1,0 +1,7 @@
+node_modules
+.ccache
+/*.sh
+other
+versions
+out
+release

@@ -1,0 +1,10 @@
+{
+    "name": "eslint-plugin-tampermonkey",
+    "version": "1.0.0",
+    "author": "Jan Biniok <jan@biniok.net>",
+    "license": "© Jan Biniok",
+    "main": "index.js",
+    "files": [
+        "*"
+    ]
+}

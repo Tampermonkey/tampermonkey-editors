@@ -1,0 +1,37 @@
+{
+    "manifest_version": 3,
+    "minimum_chrome_version": "102.0.0.0",
+    "offline_enabled": true,
+    "action": {
+        "default_icon": {
+            "16": "images/icon.png",
+            "24": "images/icon24.png",
+            "32": "images/icon32.png"
+        },
+        "default_title": "Tampermonkey Editors"
+    },
+    "icons": {
+        "16": "images/icon.png",
+        "24": "images/icon24.png",
+        "32": "images/icon32.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+    },
+    "name": "Tampermonkey Editors",
+    "short_name": "Tampermonkey Editors",
+    "version": "__short_version__.__bundle_version__",
+    "description": "Online editor support for Tampermonkey's userscripts",
+    "default_locale": "en",
+    "background": {
+       "service_worker": "background.js"
+    },
+    "permissions": [
+        "tabs",
+        "webNavigation",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://*.vscode.dev/*"
+    ]
+}

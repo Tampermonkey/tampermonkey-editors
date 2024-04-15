@@ -1,0 +1,64 @@
+{
+    "name": "file-system-access",
+    "version": "1.0.4",
+    "description": "File System Access API implementation (ponyfill) with pluggable storage adapters via IndexedDB, Cache API, in-memory etc.",
+    "browser": "./lib/es2018.js",
+    "main": "./lib/node.js",
+    "module": "./lib/node.js",
+    "types": "./lib/node.d.ts",
+    "directories": {
+      "example": "example"
+    },
+    "type": "module",
+    "scripts": {
+      "test": "npm run check-no-top-level-await && npm run test-node",
+      "test-node": "npm run build && cd test && node test-node.js",
+      "test-deno": "npm run build && cd test && deno run --allow-read --allow-net --allow-write test-deno.js",
+      "prepare": "npm run build",
+      "build": "rm -rf lib && tsc -p . && node copy-polyfill.js",
+      "check-no-top-level-await": "tsc -p . --noEmit --target es2016",
+      "watch": "tsc -w -p .",
+      "deploy-gh-pages": "npm run build && rm -rf gh-dist && mkdir gh-dist && cp -r lib test example README.md gh-dist/ && gh-pages -d gh-dist -m 'Deploy gh-pages [ci skip]'"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/use-strict/file-system-access.git"
+    },
+    "keywords": [
+      "filesystem",
+      "file",
+      "blob",
+      "stream",
+      "fs",
+      "read",
+      "write",
+      "delete",
+      "file system access",
+      "spec"
+    ],
+    "author": "Alexandru Ciuca",
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/use-strict/file-system-access/issues"
+    },
+    "homepage": "https://github.com/use-strict/file-system-access#readme",
+    "optionalDependencies": {
+      "web-streams-polyfill": "^3.1.0"
+    },
+    "dependencies": {
+      "@types/wicg-file-system-access": "^2020.9.2",
+      "fetch-blob": "^3.0.0",
+      "node-domexception": "^1.0.0"
+    },
+    "devDependencies": {
+      "@types/filesystem": "0.0.32",
+      "@types/node": "^14.17.11",
+      "gh-pages": "^3.2.3",
+      "standard": "^16.0.3",
+      "tape": "^5.2.2",
+      "typescript": "^4.3.5"
+    },
+    "engines": {
+      "node": ">=14"
+    }
+  }

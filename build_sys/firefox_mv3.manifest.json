@@ -1,0 +1,49 @@
+{
+    "manifest_version": 3,
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "editor-firefox@tampermonkey.net",
+            "strict_min_version": "101.0"
+        },
+        "gecko_android": {
+            "strict_min_version": "113.0"
+        }
+    },
+    "action": {
+        "default_icon": {
+            "16": "images/icon.png",
+            "24": "images/icon24.png",
+            "32": "images/icon32.png"
+        },
+        "default_title": "Tampermonkey Editors"
+    },
+    "icons": {
+        "16": "images/icon.png",
+        "24": "images/icon24.png",
+        "32": "images/icon32.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+    },
+    "name": "Tampermonkey Editors",
+    "short_name": "Tampermonkey Editors",
+    "version": "__short_version__.__bundle_version__",
+    "description": "Online editor support for Tampermonkey's userscripts",
+    "default_locale": "en",
+    "background": {
+        "scripts": [
+            "background.js"
+        ]
+    },
+    "permissions": [
+        "tabs",
+        "webNavigation",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "*://*.vscode.dev/*"
+    ]
+}
