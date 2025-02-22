@@ -14,8 +14,10 @@ export const ExtensionIdsToTry = IS_FIREFOX
     : [
         'dhdgffkkebhmkfjojejmpbldmpobfkfo',
         'gcalenpjmijncebpfijmoaglllgpjagf',
+        'lcmhijbkigalmkeommnijlpobloojgfn',
         'iikmkjmpaadaobahmlepeloendndfphd',
         'fcmfnpggmnlmfebfghbfnillijihnkoh',
+        'mfdhdgbonjidekjkjmjaneanmdmpmidf',
         'heiflgcdlcilkmbminjohdnmejohiblb'
     ] as const;
 
