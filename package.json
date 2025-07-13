@@ -20,7 +20,11 @@
     "build:watch": "nodemon --watch src --ext \"ts,json,js\" --exec \"npm run build\"",
     "package": "node -r esm Makefile.js package",
     "all": "node -r esm Makefile.js all",
-    "all:watch": "nodemon --watch src --ext \"ts,json,js\" --exec \"npm run all\""
+    "all:watch": "nodemon --watch src --ext \"ts,json,js\" --exec \"npm run all\"",
+    "docker": "export CUID=${SUDO_UID:-$(id -u)} CGID=${SUDO_GID:-$(id -g)}; docker compose -f build/docker-compose.yml up",
+    "docker:build:__": "npm run docker -- -d && docker compose -f build/docker-compose.yml exec -e nominimize -e source-map-comment tampermonkey-editors-ext-env",
+    "docker:build": "npm run docker:build:__ -- npm run build",
+    "docker:build:watch": "npm run docker:build:__ -- npm run build:watch"
   },
   "sideEffects": [
     "./src/polyfills/**/*.ts"

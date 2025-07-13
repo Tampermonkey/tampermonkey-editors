@@ -1,0 +1,13 @@
+services:
+  tampermonkey-editors-ext-env:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tampermonkey-editors-ext-env
+    user: "${UID}:${GID}"
+    volumes:
+      - ..:/workspace
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+    tty: true
+    working_dir: /workspace
