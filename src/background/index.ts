@@ -8,6 +8,8 @@
 import '../../src/polyfills';
 import { logger as console } from '../shared/logger';
 import { IS_EVENTPAGE, IS_FIREFOX, IS_MV3 } from '../env';
+import { ExtensionRequestMessage, ExtensionResponseMessage } from '../types/extension';
+import { WebSocketIncomingMessage } from '../types/websocket';
 import Config from './config';
 import { findTm } from './find_tm';
 import Storage from './storage';
@@ -146,14 +148,14 @@ const init = async () => {
     const setupWebSocketRelay = (wsClient: LocalWebSocketClient) => {
         const allowedActions = ['list', 'get', 'set', 'patch'];
 
-        wsClient.listen(async (msg: any) => {
+        wsClient.listen(async (msg: WebSocketIncomingMessage) => {
             console.log('WebSocket message received:', msg);
 
-            if (!msg?.action || !allowedActions.includes(msg.action)) return;
+            if (!msg?.action || !allowedActions.includes(msg.action as string)) return;
 
             msg = { method: 'userscripts', args: {...msg, messageId: msg.messageId, activeUrls: [MAIN_URL]} };
 
-            await handleMessage(msg, (response: any) => {
+            await handleMessage(msg, (response?: ExtensionResponseMessage) => {
                 try {
                     wsClient.send({ id: msg.messageId, response });
                 } catch (e) {
@@ -163,13 +165,13 @@ const init = async () => {
         });
     };
 
-    runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
+    runtime.onMessage.addListener((request: ExtensionRequestMessage, sender: { id: string }, sendResponse: ExtensionResponseMessage) => {
 
         if (sender.id === runtime.id) {
             switch(request.method){
                 case 'connectWebSocket': {
                     console.log('Connecting WebSocket client with request:', request);
-                    const { authorization, port } = request.args || {};
+                    const { authorization, port } = (request.args as { authorization?: string; port?: number }) || {};
                     if (!authorization || !port) {
                         sendResponse({ ok: false, error: 'Missing authorization or port' });
                         return true;

@@ -1,5 +1,6 @@
 /// <reference types="chrome" />
 import { hasHostPermission, requestHostPermission } from '../shared/host_permission';
+import { WebSocketConnectResponse, VSCodeDevConfigResponse } from '../types/extension';
 
 const { runtime } = chrome;
 
@@ -19,7 +20,7 @@ function connect(authorization: string, port: number) {
     runtime.sendMessage({
         method: 'connectWebSocket',
         args: { authorization, port }
-    }, (response: any) => {
+    }, (response: WebSocketConnectResponse) => {
         const feedback = document.getElementById('result') as HTMLDivElement;
         if (response.ok) {
             feedback.textContent = `WebSocket connection initiated.`;
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let openOnline = document.getElementById('openOnline') as HTMLButtonElement;
     openOnline.disabled = true;
 
-    let vscodeConf = await runtime.sendMessage({ method: 'vscodeDevConfig' });
+    let vscodeConf = await runtime.sendMessage({ method: 'vscodeDevConfig' }) as VSCodeDevConfigResponse;
 
     let hpp = await hasHostPermission(vscodeConf.host);
 

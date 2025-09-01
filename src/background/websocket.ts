@@ -1,18 +1,26 @@
+import { WebSocketIncomingMessage } from '../types/websocket';
+
+interface Alarm {
+    name: string;
+    scheduledTime: number;
+    periodInMinutes?: number;
+}
+
 export class LocalWebSocketClient {
     private ws: WebSocket;
     public connected: Promise<this>;
     private resolveConnected!: (value: this) => void;
-    private rejectConnected!: (reason?: any) => void;
-    private messageListeners: Array<(msg: any) => void> = [];
+    private rejectConnected!: (reason?: Event | Error | string) => void;
+    private messageListeners: Array<(msg: WebSocketIncomingMessage) => void> = [];
 
     constructor(auth: string, port: number) {
         const wsUrl = `ws://localhost:${port}`;
-        this.connected = new Promise(() => {}); // Appease the Typescript gods
+        this.connected = new Promise(() => void(0)); // Appease the Typescript gods
         this._prepareConnection();
         try {
             this.ws = new WebSocket(wsUrl);
         } catch (err) {
-            this.rejectConnected(err);
+            this.rejectConnected(err as Error);
             throw err;
         }
         this.ws.onopen = async () => {
@@ -23,7 +31,7 @@ export class LocalWebSocketClient {
 
             (async function (socket: LocalWebSocketClient) {
 
-                async function keepGoingAlarm(alarm: any) {
+                async function keepGoingAlarm(alarm: Alarm) {
                     if (alarm.name !== 'KeepWebsocketAlive') return;
                     console.debug('Websocket keepAlive PING');
 
@@ -69,31 +77,31 @@ export class LocalWebSocketClient {
             chrome.alarms.clear('KeepWebsocketAlive')
         };
 
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = (event: MessageEvent) => {
             try {
-                const data = JSON.parse(event.data);
+                const data: { method: string; token: string } = JSON.parse(event.data);
                 if (data.method !== 'auth' || data.token !== auth[1]) {
                     console.error('WebSocket authentication failed', data.method, port);  // Not mentioning the auth purposefully
                     this.rejectConnected('Server Auth failed');
                     this.ws.close();
                 }
 
-                this.ws.onmessage = (event) => {
-                    let msg = event.data;
+                this.ws.onmessage = (event: MessageEvent) => {
+                    let msg: string | WebSocketIncomingMessage = event.data;
                     try {
-                        msg = JSON.parse(event.data);
+                        msg = JSON.parse(event.data) as WebSocketIncomingMessage;
                     } catch {}
                     if (data.method === 'ping') {
                         console.debug('pong!');
                         return this.ws.send(JSON.stringify({ method: 'pong' }));
                     }
-                    this.messageListeners.forEach(fn => fn(msg));
+                    this.messageListeners.forEach(fn => fn(msg as WebSocketIncomingMessage));
                 };
                 this.ws.send(JSON.stringify({ method: 'authOK' }));
                 this.resolveConnected(this);
                 console.log('Ready for messaging:');
             } catch (e) {
-                this.rejectConnected(e);
+                this.rejectConnected(e as Error);
                 throw e;
             }
         };
@@ -128,11 +136,11 @@ export class LocalWebSocketClient {
     }
 
 
-    public listen(listener: (msg: any) => void) {
+    public listen(listener: (msg: WebSocketIncomingMessage) => void) {
         this.messageListeners.push(listener);
     }
 
-    public send(msg: any) {
+    public send(msg: string | Record<string, unknown>) {
         if (this.ws.readyState == WebSocket.OPEN) {
             this.ws.send(typeof msg === 'string' ? msg : JSON.stringify(msg));
         } else {
