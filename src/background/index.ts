@@ -8,10 +8,13 @@
 import '../../src/polyfills';
 import { logger as console } from '../shared/logger';
 import { IS_EVENTPAGE, IS_FIREFOX, IS_MV3 } from '../env';
+import { ExtensionRequestMessage, ExtensionResponseMessage } from '../types/extension';
+import { WebSocketIncomingMessage } from '../types/websocket';
 import Config from './config';
 import { findTm } from './find_tm';
 import Storage from './storage';
-import { hasHostPermission, requestHostPermission } from './host_permission';
+import { hasHostPermission } from '../shared/host_permission';
+import { LocalWebSocketClient } from './websocket';
 
 const MAIN_URL = 'https://vscode.dev/?connectTo=tampermonkey';
 const { runtime, action, tabs, webNavigation, scripting } = chrome;
@@ -111,9 +114,11 @@ const init = async () => {
             return handleMessage(request, sendResponse);
         } else {
             let resolve: () => void = () => null;
+            let fail: () => void = () => null;
 
-            lock = new Promise<void>(r => resolve = r);
-            lock.then(() => lock = undefined);
+
+            lock = new Promise<void>((r, f) =>{ resolve = r; fail = f });
+            lock.finally(() => lock = undefined);
 
             const r = await findTm([ MAIN_URL ]);
 
@@ -130,6 +135,7 @@ const init = async () => {
                 sendResponse(response);
                 port.onMessage.removeListener(h);
                 resolve();
+                console.debug(`Response of message`, request?.args?.requestid, response);
             };
 
             port.onMessage.addListener(h);
@@ -139,22 +145,72 @@ const init = async () => {
         }
     };
 
-    runtime.onMessage.addListener((request, _sender, sendResponse) => {
-        handleMessage(request, sendResponse);
+    const setupWebSocketRelay = (wsClient: LocalWebSocketClient) => {
+        const allowedActions = ['list', 'get', 'set', 'patch'];
+
+        wsClient.listen(async (msg: WebSocketIncomingMessage) => {
+            console.log('WebSocket message received:', msg);
+
+            if (!msg?.action || !allowedActions.includes(msg.action as string)) return;
+
+            msg = { method: 'userscripts', args: {...msg, messageId: msg.messageId, activeUrls: [MAIN_URL]} };
+
+            await handleMessage(msg, (response?: ExtensionResponseMessage) => {
+                try {
+                    wsClient.send({ id: msg.messageId, response });
+                } catch (e) {
+                    console.error('Response send error:', e);
+                }
+            });
+        });
+    };
+
+    runtime.onMessage.addListener((request: ExtensionRequestMessage, sender: { id: string }, sendResponse: ExtensionResponseMessage) => {
+
+        if (sender.id === runtime.id) {
+            switch(request.method){
+                case 'connectWebSocket': {
+                    console.log('Connecting WebSocket client with request:', request);
+                    const { authorization, port } = (request.args as { authorization?: string; port?: number }) || {};
+                    if (!authorization || !port) {
+                        sendResponse({ ok: false, error: 'Missing authorization or port' });
+                        return true;
+                    }
+                    const socket = new LocalWebSocketClient(authorization, port);
+                    setupWebSocketRelay(socket);
+                    (async () => {
+                        try {
+                            await socket.connected;
+                            console.log(`WebSocket client connected with auth: ${authorization}, port: ${port}`);
+                            sendResponse({ ok: true });
+                        } catch (e: any) {
+                            console.error('WebSocket connection error:', e);
+                            sendResponse({ ok: false, error: e?.message || e?.reason || e });
+                        }
+                    })();
+                    return true;
+                }
+                case 'openOnlineEditor': {
+                    openOnlineEditor();
+                    return true;
+                }
+                case 'vscodeDevConfig': {
+                    sendResponse({ host: MAIN_URL });
+                    return true;
+                }
+            }
+        } else {
+            handleMessage(request, sendResponse);
+        }
         return true;
     });
 
     let hhp: boolean | undefined;
-    action.onClicked.addListener(async (_details) => {
-        void(runtime.lastError);
+    const openOnlineEditor = async () => {
+        hhp = hhp || await hasHostPermission(MAIN_URL);
+        setForbidden(!hhp);
         if (!hhp) {
-            const granted = await requestHostPermission();
-            if (granted) {
-                hhp = granted;
-                setForbidden(!hhp);
-            } else {
-                return;
-            }
+            throw new Error('Need website permission to find tab with url ' + MAIN_URL);
         }
 
         tabs.query({ url: MAIN_URL + '*' }, info => {
@@ -164,8 +220,7 @@ const init = async () => {
                 tabs.create({ url: MAIN_URL, active: true }, () => runtime.lastError);
             }
         });
-
-    });
+    };
 
     // eslint-disable-next-line no-async-promise-executor
     let lock: Promise<any> | undefined = (async () => {
@@ -195,5 +250,3 @@ if (IS_EVENTPAGE) {
 } else {
     throw new Error('This should not happen');
 }
-
-

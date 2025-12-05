@@ -189,13 +189,18 @@ const getConfigs = () => {
                     {
                         from: './LICENSE',
                         to: 'rel/'
+                    },
+                    {
+                        from: './src/popup/popup.html',
+                        to: 'rel/popup.html'
                     }
                 ]
             })
         );
 
         c.entry = {
-            'background': './src/background/index.ts'
+            'background': './src/background/index.ts',
+            'popup_code_input': './src/popup/popup_code_input.ts'
         };
 
         return c;
