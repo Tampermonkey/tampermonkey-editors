@@ -1,4 +1,4 @@
-// Chrome Extension Message Types
+// Own Message Types
 
 import { BackgroundToContent, ContentToBackground } from './communication';
 
@@ -11,7 +11,7 @@ export interface WebSocketConnectRequest {
 }
 
 export interface MethodRequest {
-    method: 'openOnlineEditor' | 'vscodeDevConfig';
+    method: 'openOnlineEditor';
 }
 
 export type ExtensionRequestMessage =
@@ -24,11 +24,6 @@ export interface WebSocketConnectResponse {
     error?: string;
 }
 
-export interface VSCodeDevConfigResponse {
-    host: string;
-}
-
 export type ExtensionResponseMessage =
     | WebSocketConnectResponse
-    | VSCodeDevConfigResponse
     | BackgroundToContent;

@@ -15,11 +15,12 @@ import { findTm } from './find_tm';
 import Storage from './storage';
 import { BackgroundToContent, ContentToBackground } from '../types/communication';
 import { ExternalRequest } from '../types/external';
-import { hasHostPermission } from '../shared/host_permission';
+import { hasHostPermission } from './host_permission';
 import { LocalWebSocketClient } from './websocket';
 
 const MAIN_URL = 'https://vscode.dev/?connectTo=tampermonkey';
 const { runtime, action, tabs, webNavigation, scripting } = chrome;
+const D = true;
 
 const setForbidden = async (forbidden: boolean) => {
     /* eslint-disable @typescript-eslint/naming-convention */
@@ -61,7 +62,7 @@ const initWebNavigation = () => {
                     tabId,
                     frameIds: [ 0 ]
                 },
-                ...{ injectImmediately: true } as any,
+                ...{ injectImmediately: true },
                 world: 'ISOLATED'
             });
             scripting.executeScript({
@@ -72,7 +73,7 @@ const initWebNavigation = () => {
                     tabId,
                     frameIds: [ 0 ]
                 },
-                ...{ injectImmediately: true } as any,
+                ...{ injectImmediately: true },
                 world: IS_FIREFOX ? 'ISOLATED' : 'MAIN'
             });
         }
@@ -148,9 +149,12 @@ const init = async () => {
         const allowedActions = ['list', 'get', 'set', 'patch'];
 
         wsClient.listen(async (msg: WebSocketIncomingMessage) => {
-            console.log('WebSocket message received:', msg);
+            if (D) console.debug('WebSocket message received:', msg);
 
-            if (!('action' in msg) || !allowedActions.includes(msg.action as string)) return;
+            if (!('action' in msg) || !allowedActions.includes(msg.action)) {
+                console.warn('Invalid action received from WebSocket client', msg);
+                return;
+            }
 
             const m: ContentToBackground = { method: 'userscripts', args: {...msg } };
 
@@ -164,51 +168,43 @@ const init = async () => {
         });
     };
 
-    runtime.onMessage.addListener((request: ExtensionRequestMessage, sender, sendResponse: (r: ExtensionResponseMessage) => void) => {
-        switch(request.method){
+    runtime.onMessage.addListener((request: ExtensionRequestMessage, sender, sendResponse: (r: ExtensionResponseMessage) => void): true | undefined => {
+        if (D) console.log(request.method, request);
+        switch (request.method){
             case 'connectWebSocket': {
                 if (sender.id !== runtime.id) {
                     sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
-                    return false;
+                    return;
                 }
 
-                console.log('Connecting WebSocket client with request:', request);
-                const { authorization, port } = (request.args as { authorization?: string; port?: number }) || {};
+                if (D) console.log('Connecting WebSocket client with request:', request);
+                const { authorization, port } = request.args || {};
                 if (!authorization || !port) {
                     sendResponse({ ok: false, error: 'Missing authorization or port' });
-                    return true;
+                    return;
                 }
                 const socket = new LocalWebSocketClient(authorization, port);
                 setupWebSocketRelay(socket);
                 (async () => {
                     try {
                         await socket.connected;
-                        console.log(`WebSocket client connected with auth: ${authorization}, port: ${port}`);
+                        if (D) console.log(`WebSocket client connected with auth: ${authorization}, port: ${port}`);
                         sendResponse({ ok: true });
                     } catch (e: any) {
                         console.error('WebSocket connection error:', e);
                         sendResponse({ ok: false, error: e?.message || e?.reason || e });
                     }
                 })();
-                return true;
+                break;
             }
             case 'openOnlineEditor': {
                 if (sender.id !== runtime.id) {
                     sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
-                    return false;
+                    return;
                 }
 
                 openOnlineEditor();
-                return true;
-            }
-            case 'vscodeDevConfig': {
-                if (sender.id !== runtime.id) {
-                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
-                    return false;
-                }
-
-                sendResponse({ host: MAIN_URL });
-                return true;
+                break;
             }
             default: {
                 handleMessage(request, sendResponse);

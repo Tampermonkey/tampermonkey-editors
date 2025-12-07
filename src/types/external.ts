@@ -1,3 +1,5 @@
+// Tampermonkey extension message types
+
 export type Request = {
     origin?: string
 };

@@ -1,6 +1,5 @@
 /// <reference types="chrome" />
-import { hasHostPermission, requestHostPermission } from '../shared/host_permission';
-import { WebSocketConnectResponse } from '../types/extension';
+import { MethodRequest, WebSocketConnectRequest, WebSocketConnectResponse } from '../types/extension';
 
 const { runtime } = chrome;
 
@@ -17,7 +16,7 @@ function splitCode(code: string): { auth: string; port: number } | null {
 }
 
 function connect(authorization: string, port: number) {
-    runtime.sendMessage({
+    runtime.sendMessage(<WebSocketConnectRequest>{
         method: 'connectWebSocket',
         args: { authorization, port }
     }, (response: WebSocketConnectResponse) => {
@@ -31,22 +30,9 @@ function connect(authorization: string, port: number) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-
     const openOnline = document.getElementById('openOnline') as HTMLButtonElement;
-    openOnline.disabled = true;
-
-    const vscodeConf = await runtime.sendMessage({ method: 'vscodeDevConfig' });
-
-    let hpp = await hasHostPermission(vscodeConf.host);
-
-    openOnline.disabled = false;
-    openOnline.addEventListener('click', async () => {
-        // browser rules: First thing before waiting must be requesting for permission
-        hpp = hpp || await requestHostPermission();
-        if (!hpp) {
-            return;
-        }
-        runtime.sendMessage({ method: 'openOnlineEditor' });
+    openOnline.addEventListener('click', () => {
+        runtime.sendMessage(<MethodRequest>{ method: 'openOnlineEditor' });
     });
 });
 
@@ -81,5 +67,4 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         connectWithCode(input.value);
     });
-
 });

@@ -13,7 +13,6 @@ export const hasHostPermission = async (url: string): Promise<boolean> => {
     return hpp;
 };
 
-
 const manifest = runtime.getManifest();
 const { host_permissions: hp, permissions: p } = manifest;
 const origins = (p || [])
