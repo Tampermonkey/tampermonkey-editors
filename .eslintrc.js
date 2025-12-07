@@ -17,6 +17,10 @@ const default_rules = {
     ]
 };
 
+const extension_page_rules = {
+    'tampermonkey/no-global-object-access': 'off'
+};
+
 const content_script_rules = {
     'tampermonkey/no-global-object-access': 'off'
 };
@@ -110,6 +114,11 @@ module.exports = {
                 project: [ './tsconfig.json' ]
             },
             rules: ts_rules
+        },
+        {
+            files: [ 'src/popup/*.ts' ],
+            extends: extends_ts,
+            rules: merge_rules({}, ts_rules, extension_page_rules)
         },
         {
             files: unsafe_env_ts,

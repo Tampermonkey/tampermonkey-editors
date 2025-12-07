@@ -2,7 +2,7 @@
   "name": "tampermonkey_editors",
   "version": "1.0.0",
   "author": "Jan Biniok <jan@biniok.net>",
-  "license": "© Jan Biniok",
+  "license": "MIT",
   "description": "",
   "engines": {
     "node": ">=18 <19",
@@ -30,10 +30,10 @@
     "./src/polyfills/**/*.ts"
   ],
   "devDependencies": {
-    "@types/chrome": "^0.0.203",
+    "@types/chrome": "^0.1.32",
     "@types/eslint": "^8.4.2",
-    "@types/json-schema": "^7.0.7",
     "@types/firefox-webext-browser": "^120.0.0",
+    "@types/json-schema": "^7.0.7",
     "@types/wicg-file-system-access": "^2020.9.5",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",

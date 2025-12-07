@@ -21,7 +21,7 @@ const origins = (p || [])
 .filter((p: string) => p.startsWith('https://') || p.startsWith('http://') || p.startsWith('*://'));
 
 export const requestHostPermission = async (): Promise<boolean> => {
-    let result = (await permissions.request({origins})) as any as boolean; // TS is wrong. This IS boolean: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/permissions/request
+    const result = (await permissions.request({ origins }));
     if (runtime.lastError) {
         console.error(runtime.lastError);
     }

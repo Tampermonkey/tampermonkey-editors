@@ -1,3 +1,4 @@
+import { setTimeout } from '../shared/environment';
 import { WebSocketIncomingMessage } from '../types/websocket';
 
 interface Alarm {
@@ -74,7 +75,7 @@ export class LocalWebSocketClient {
         this.ws.onerror = (err) => {
             this.rejectConnected(err);
             console.error('WebSocket error:', err);
-            chrome.alarms.clear('KeepWebsocketAlive')
+            chrome.alarms.clear('KeepWebsocketAlive');
         };
 
         this.ws.onmessage = (event: MessageEvent) => {
