@@ -1,7 +1,7 @@
 // #region content<->page
 
 import { Bridge, BridgeMessage } from '../tab/bridge';
-import { CreateExternalRequest, GetExternalRequest, GetExternalResponse, ListExternalRequest, ListExternalResponse, OptionsExternalRequest, SetExternalRequest, UpdateExternalResponse, UserscriptsRequest } from './external';
+import { CreateExternalRequest, DeleteExternalRequest, GetExternalRequest, GetExternalResponse, ListExternalRequest, ListExternalResponse, OptionsExternalRequest, SetExternalRequest, UpdateExternalResponse, UserscriptsRequest } from './external';
 import { OmitFrom } from './shared';
 
 export type InternalErrorResponse = {
@@ -24,7 +24,8 @@ export type ContentToBackground = BridgeMessage<
         ListExternalRequest |
         GetExternalRequest |
         SetExternalRequest |
-        CreateExternalRequest,
+        CreateExternalRequest |
+        DeleteExternalRequest,
         UserscriptsRequest
     >
 >;
@@ -35,6 +36,7 @@ export type BackgroundToContent =
     GetExternalRequest |
     SetExternalRequest |
     CreateExternalRequest |
+    DeleteExternalRequest |
     InternalErrorResponse;
 // #endregion
 
