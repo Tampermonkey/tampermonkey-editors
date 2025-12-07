@@ -41,7 +41,7 @@ export type BackgroundToContent =
 // #endregion
 
 export type CoPaBridge<S, R> = Bridge<OmitFrom<S, UserscriptsRequest>, R>;
-export type PaCoBridge<S, R> = Bridge<S, BridgeMessage<'userscripts', OmitFrom<R, UserscriptsRequest>>>;
+export type PaCoBridge<S extends Record<string, any>, R> = Bridge<S, BridgeMessage<'userscripts', OmitFrom<R, UserscriptsRequest>>>;
 
 export type PageContentBridge = CoPaBridge<ListExternalRequest, ListExternalResponse | InternalErrorResponse> & CoPaBridge<GetExternalRequest, GetExternalResponse | InternalErrorResponse> & CoPaBridge<SetExternalRequest, UpdateExternalResponse | InternalErrorResponse>;
 export type ContentPageBridge = PaCoBridge<GetExternalResponse | ListExternalResponse | UpdateExternalResponse | InternalErrorResponse, ListExternalRequest | GetExternalRequest | SetExternalRequest>;
