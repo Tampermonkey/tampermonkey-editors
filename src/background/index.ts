@@ -12,6 +12,8 @@ import Config from './config';
 import { findTm } from './find_tm';
 import Storage from './storage';
 import { hasHostPermission, requestHostPermission } from './host_permission';
+import { BackgroundToContent, ContentToBackground } from '../types/communication';
+import { ExternalRequest } from '../types/external';
 
 const MAIN_URL = 'https://vscode.dev/?connectTo=tampermonkey';
 const { runtime, action, tabs, webNavigation, scripting } = chrome;
@@ -105,7 +107,7 @@ const init = async () => {
         initWebNavigation();
     }
 
-    const handleMessage = async (request: any, sendResponse: (response?: any) => void): Promise<void> => {
+    const handleMessage = async (request: ContentToBackground, sendResponse: (response?: BackgroundToContent) => void): Promise<void> => {
         if (lock) {
             await lock;
             return handleMessage(request, sendResponse);
@@ -126,14 +128,14 @@ const init = async () => {
             const [ { id, port } ] = r;
             console.log(`Found extension ${id}`);
 
-            const h = (response: any) => {
+            const h = (response: BackgroundToContent) => {
                 sendResponse(response);
                 port.onMessage.removeListener(h);
                 resolve();
             };
 
             port.onMessage.addListener(h);
-            port.postMessage({ method: request.method, ...request.args });
+            port.postMessage(<ExternalRequest>{ method: request.method, ...request.args });
             await lock;
             lock = undefined;
         }

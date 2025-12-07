@@ -1,7 +1,7 @@
 import { FileHandle, FolderHandle } from '../../../vendor/file-system-access/adapters/memory';
 import FileSystemDirectoryHandle from '../../../vendor/file-system-access/FileSystemDirectoryHandle';
 import { ExternalHandler, MessagingFile } from './messaging_file';
-import { ListExternalResponseListItem } from './types';
+import { ListExternalResponseListItem } from '../../types/external';
 
 const replaceTag = (tag: string): string => ({
     /* eslint-disable @typescript-eslint/naming-convention */

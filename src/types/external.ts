@@ -1,9 +1,3 @@
-export type InternalErrorResponse = {
-    error: string
-};
-
-export const isInternalErrorResponse = (message: any): message is InternalErrorResponse => message.error;
-
 export type Request = {
     origin?: string
 };
@@ -90,4 +84,13 @@ export type DeleteExternalResponse = {
     messageId: string,
     error?: ExternalRequestError
 };
+
+export type ExternalRequest =
+    OptionsExternalRequest |
+    ListExternalRequest |
+    GetExternalRequest |
+    SetExternalRequest |
+    CreateExternalRequest |
+    DeleteExternalRequest;
+
 // #endregion

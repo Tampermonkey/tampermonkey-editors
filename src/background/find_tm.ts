@@ -3,7 +3,7 @@ import { IS_FIREFOX } from '../env';
 import { short_id } from './browser';
 import { logger as console } from '../shared/logger';
 import { getRandomString } from '../shared/utils';
-import { OptionsExternalRequest, OptionsExternalResponse } from '../tab/page/types';
+import { OptionsExternalRequest, OptionsExternalResponse } from '../types/external';
 import Config from './config';
 
 export const ExtensionIdsToTry = IS_FIREFOX

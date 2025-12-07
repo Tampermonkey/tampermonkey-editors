@@ -3,7 +3,7 @@ import { runOnDOMContentLoaded } from '../helper';
 
 const V = false;
 
-export const createBridge = <R>({ sendPrefix, listenPrefix, cloneInto }: Options): Bridge<R> => {
+export const createBridge = <S, R>({ sendPrefix, listenPrefix, cloneInto }: Options): Bridge<S, R> => {
     const prepare = <T>(d: T) => cloneInto ? cloneInto(d, window.document) as T : d;
 
     const encode = (type: string, data: MessageData) => {
@@ -86,7 +86,7 @@ export const createBridge = <R>({ sendPrefix, listenPrefix, cloneInto }: Options
         send: (method: string, arg?: Record<string, any>, cb?: ((response: any) => void) | null) => {
             send(`${sendPrefix}_${id}`, { m: method, a: arg, r: cb ? registerResponse(cb) : null });
         },
-        setMessageListener: <T = R>(m: MessageListener<T, R>) => {
+        setMessageListener: (m: MessageListener<R, S>) => {
             messageListener = m;
         },
         cleanup: () => {
