@@ -1,5 +1,5 @@
 /* global module */
-const getWebpackDefineVariables = (browser, manifest, is_background, rnd) => {
+export const getWebpackDefineVariables = (browser, manifest, is_background, rnd) => {
     return {
         'process.env.IS_CHROME': JSON.stringify(browser == 'chrome' || browser == 'opera'),
         'process.env.IS_FIREFOX': JSON.stringify(browser == 'firefox'),
@@ -9,5 +9,3 @@ const getWebpackDefineVariables = (browser, manifest, is_background, rnd) => {
         'process.env.COMM_ID': JSON.stringify(rnd.toString(36).substr(2, 5))
     };
 };
-
-module.exports = { getWebpackDefineVariables };

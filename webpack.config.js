@@ -1,14 +1,18 @@
 /* global require, __dirname, module */
 
-const CopyPlugin = require('copy-webpack-plugin');
-const WrapperPlugin = require('wrapper-webpack-plugin');
+import CopyPlugin from 'copy-webpack-plugin';
+import WrapperPlugin from 'wrapper-webpack-plugin';
+import path from 'path';
+import webpack from 'webpack';
+import TerserPlugin from 'terser-webpack-plugin';
+import process from 'process';
+import { getWebpackDefineVariables } from './build_sys/helpers.js';
+import { LicenseWebpackPlugin } from 'license-webpack-plugin';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const path = require('path');
-const webpack = require('webpack');
-const TerserPlugin = require('terser-webpack-plugin');
-const process = require('process');
-const { getWebpackDefineVariables } = require('./build_sys/helpers');
-const LicenseWebpackPlugin = require('license-webpack-plugin').LicenseWebpackPlugin;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const getConfigs = () => {
     const rnd = process.env['rnd'] ? process.env['rnd'] : Math.random().toString(36).substr(2, 10);
@@ -209,4 +213,4 @@ const getConfigs = () => {
     };
 };
 
-module.exports = getConfigs;
+export default getConfigs;
