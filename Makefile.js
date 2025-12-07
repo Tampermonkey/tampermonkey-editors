@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
-/* global process, __dirname */
+/* global process */
 
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { spawnSync } from 'child_process';
 import { exit } from 'process';
 import fs from 'fs';
@@ -11,7 +13,13 @@ import which from 'which';
 import archiver from 'archiver';
 import glob from 'glob';
 import tmp from 'tmp';
-import getConfigs from './webpack.config';
+import getConfigs from './webpack.config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const NODE_OPTIONS = [
+];
 
 tmp.setGracefulCleanup();
 
@@ -126,7 +134,7 @@ const methods = {
         return spawnSync(
             'node',
             [
-                '-r', 'esm',
+                ...NODE_OPTIONS,
                 './build_sys/check_i18n.js' /* , '--debug' */,
                 ...forward_args
             ],
@@ -191,7 +199,7 @@ const methods = {
             ).status;
 
             if (status !== 0) {
-                console.log(`Command ${e.m} failed!`);
+                console.log(`Command ${e.m} failed with status ${status}!`);
                 exit(status);
             }
         });
@@ -289,5 +297,11 @@ const f = methods[method];
 if (!f) {
     exit(1);
 } else {
-    f().then(exit).catch(err => console.log(err));
+    try {
+        await f();
+        exit(0);
+    } catch(err) {
+        console.log(err);
+        exit(1);
+    }
 }

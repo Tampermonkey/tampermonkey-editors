@@ -2,8 +2,8 @@
 
 /* global require, process */
 
-var exec = require('child_process').exec;
-var fs = require('fs');
+import { exec } from 'child_process';
+import fs from 'fs';
 
 var cache = {};
 var used = {};
