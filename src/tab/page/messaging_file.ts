@@ -1,7 +1,7 @@
 import { AsyncFile } from '../../../vendor/file-system-access/adapters/memory';
 
 export type ExternalHandler = {
-    get: (name: string, path: string, ifNotModifiedSince?: number) => Promise<File>
+    get: (name: string, path: string, ifModifiedSince?: number) => Promise<File>
     set: (name: string, path: string, file: File) => Promise<void>
 };
 

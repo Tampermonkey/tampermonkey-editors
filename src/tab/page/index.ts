@@ -50,9 +50,9 @@ import { PageContentBridge } from '../../types/communication';
     const root = new FolderHandle('unused', false);
 
     makeDirHandleFromList(root, list, {
-        get: async (name: string, path: string, ifNotModifiedSince?: number) => {
+        get: async (name: string, path: string, ifModifiedSince?: number) => {
             return await lock(async () => {
-                const { value, lastModified } = await getEntryContent(bridge, path, ifNotModifiedSince);
+                const { value, lastModified } = await getEntryContent(bridge, path, ifModifiedSince);
                 return new File([ value || '' ], name, { lastModified });
             });
         },

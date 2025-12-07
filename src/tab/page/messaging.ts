@@ -28,11 +28,11 @@ export const getScriptList = (bridge: PageContentBridge): Promise<ListExternalRe
     });
 };
 
-export const getEntryContent = (bridge: PageContentBridge, path: string, ifNotModifiedSince?: number): Promise<RequiredKeys<Pick<GetExternalResponse, 'value' | 'lastModified'>, 'lastModified'>> => {
+export const getEntryContent = (bridge: PageContentBridge, path: string, ifModifiedSince?: number): Promise<RequiredKeys<Pick<GetExternalResponse, 'value' | 'lastModified'>, 'lastModified'>> => {
     return new Promise<RequiredKeys<Pick<GetExternalResponse, 'value' | 'lastModified'>, 'lastModified'>>((resolve, reject) => {
         const to = setTimeout(() => reject(new DOMException(TIMEOUT_MESSAGE)), MESSAGE_TIMEOUT);
 
-        bridge.send('userscripts', { action: 'get', path, ifNotModifiedSince }, (response) => {
+        bridge.send('userscripts', { action: 'get', path, ifModifiedSince }, (response) => {
             clearTimeout(to);
             if (!response || isInternalErrorResponse(response) || !response.lastModified) {
                 reject(response?.error);
