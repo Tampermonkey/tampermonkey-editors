@@ -16,6 +16,7 @@ import { getEntryContent, getScriptList, setEntryContent } from './messaging';
 import { makeDirHandleFromList } from './userscripts';
 import { lock } from '../../shared/lock';
 import { cloneInto, exportFunction } from '../shared/sandbox';
+import { PageContentBridge } from '../../types/communication';
 
 (async (global: Window & typeof globalThis) => {
     const V = false;
@@ -25,7 +26,7 @@ import { cloneInto, exportFunction } from '../shared/sandbox';
 
     let dirHandle: globalThis.FileSystemDirectoryHandle | undefined; // eslint-disable-line prefer-const
 
-    const bridge = createBridge({ sendPrefix: '2C', listenPrefix: '2P'});
+    const bridge = createBridge({ sendPrefix: '2C', listenPrefix: '2P'}) as PageContentBridge;
     bridge.init(COMM_ID);
 
     global.showOpenFilePicker = exportFunction(async (pickerOpts) => {

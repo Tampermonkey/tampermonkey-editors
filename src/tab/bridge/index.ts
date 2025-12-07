@@ -1,16 +1,20 @@
 import { NoInfer } from '../../types/shared';
 import { createBridge as createEventBridge} from './event_bridge';
 
-export type Bridge<R> = {
+export type Bridge<S extends Record<string, any>, R> = {
     init: (new_id?: string) => void;
-    send: <T extends Record<string, any> = never, M = R>(method: string, args?: NoInfer<T>, cb?: ((response: M) => void) | null) => void;
-    setMessageListener: <T = R>(m: MessageListener<NoInfer<T>, R>) => void;
+    send: <T = S, M = R>(method: string, args?: NoInfer<T>, cb?: ((response: M) => void) | null) => void;
+    setMessageListener: (m: MessageListener<NoInfer<R>, S>) => void;
     cleanup: () => void;
 };
 
 export type BridgeSender = (id: string, e: MessageData) => void;
 export type BridgeOnMessageListener = (id: string, e: MessageData) => void;
 export type BridgeRegisterOnMessage = (listener: BridgeOnMessageListener) => void;
+export type BridgeMessage<M = unknown, A = unknown> = {
+    method: M;
+    args: A;
+};
 
 export type Options = {
     listenPrefix: string,
@@ -20,8 +24,8 @@ export type Options = {
     onMessage?: BridgeRegisterOnMessage
 };
 
-export type MessageData = {
-    m: string,
+export type MessageData<M = unknown> = {
+    m: M,
     a: MessageArgs,
     r: number | null // (ret: any) => void,
 };
