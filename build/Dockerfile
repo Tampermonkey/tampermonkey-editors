@@ -1,6 +1,5 @@
 
-# package.json has: "node": ">=18 <19",
-FROM node:18
+FROM node:20
 
 RUN chmod 777 /home
 
