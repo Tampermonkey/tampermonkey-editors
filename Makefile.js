@@ -14,6 +14,7 @@ import archiver from 'archiver';
 import glob from 'glob';
 import tmp from 'tmp';
 import getConfigs from './webpack.config.js';
+import * as sass from 'sass'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -153,6 +154,19 @@ const methods = {
         src = src.replace(/__bundle_version__/g, __bundle_version__);
         fs.writeFileSync('out/rel/manifest.json', src);
     },
+    scss: async () => {
+        [
+            { in: 'src/popup/styles/index.scss', out: 'out/rel/style.css' },
+        ].some(e => {
+            console.log(`SCSS: process ${e.in} now`);
+            const minimize = ![ '1', 'true' ].includes(process.env['nominimize']);
+            if (!fs.existsSync(path.dirname(e.out))) fs.mkdirSync(path.dirname(e.out), { recursive: true });
+
+            let res = sass.compile(e.in, { style: minimize ? 'compressed' : 'expanded', sourceMap: false, charset: false });
+            const css = '@charset "UTF-8";' + res.css.replace(/[^\0-\x7f]/gu, (match) => `\\${match.codePointAt(0).toString(16)}`);
+            fs.writeFileSync(e.out, css);
+        });
+    },
     pack: async () => {
         const { content, page, background } = getConfigs();
 
@@ -270,6 +284,7 @@ const methods = {
             { m: 'lint', a: false, r: h !== 'off' },
             { m: 'check', a: false, r: c !== 'off' },
             { m: 'build', a: a, r: true },
+            { m: 'scss', a: false, r: true },
             { m: 'package', a: a, r: true }
         ].some(e => {
             if (!e.r) return;

@@ -177,25 +177,38 @@ const init = async () => {
                     return;
                 }
 
-                if (D) console.log('Connecting WebSocket client with request:', request);
-                const { authorization, port } = request.args || {};
-                if (!authorization || !port) {
-                    sendResponse({ ok: false, error: 'Missing authorization or port' });
+                if ('args' in request) {
+                    if (D) console.log('Connecting WebSocket client with request:', request);
+                    const { authorization, port } = request.args || {};
+                    if (!authorization || !port) {
+                        sendResponse({ ok: false, error: 'Missing authorization or port' });
+                        return;
+                    }
+                    const socket = new LocalWebSocketClient(authorization, port);
+                    setupWebSocketRelay(socket);
+                    (async () => {
+                        try {
+                            await socket.connected;
+                            if (D) console.log(`WebSocket client connected with auth: ${authorization}, port: ${port}`);
+                            sendResponse({ ok: true });
+                        } catch (e: any) {
+                            console.error('WebSocket connection error:', e);
+                            sendResponse({ ok: false, error: e?.message || e?.reason || e });
+                        }
+                    })();
+                    break;
+                } else {
+                    const g = LocalWebSocketClient.g;
+
+                    if (!g) {
+                        sendResponse({ ok: null });
+                    } else if (g.state !== 'open') {
+                        sendResponse({ ok: false, error: 'No WebSocket client connected' });
+                    } else {
+                        sendResponse({ ok: true });
+                    }
                     return;
                 }
-                const socket = new LocalWebSocketClient(authorization, port);
-                setupWebSocketRelay(socket);
-                (async () => {
-                    try {
-                        await socket.connected;
-                        if (D) console.log(`WebSocket client connected with auth: ${authorization}, port: ${port}`);
-                        sendResponse({ ok: true });
-                    } catch (e: any) {
-                        console.error('WebSocket connection error:', e);
-                        sendResponse({ ok: false, error: e?.message || e?.reason || e });
-                    }
-                })();
-                break;
             }
             case 'openOnlineEditor': {
                 if (sender.id !== runtime.id) {
@@ -204,6 +217,27 @@ const init = async () => {
                 }
 
                 openOnlineEditor();
+                return
+            }
+            case 'setOption': {
+                if (sender.id !== runtime.id) {
+                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
+                    return;
+                }
+                const { name, value } = request.args;
+                (async () => {
+                    await Config.setValue(name, value);
+                    sendResponse({ ok: true });
+                })();
+                break;
+            }
+            case 'getOption': {
+                if (sender.id !== runtime.id) {
+                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
+                    return;
+                }
+                const { name } = request.args;
+                sendResponse({ name, value: Config.values[name] });
                 break;
             }
             default: {
@@ -234,6 +268,9 @@ const init = async () => {
     let lock: Promise<any> | undefined = (async () => {
         await Storage.init();
         await Config.init();
+        Config.addChangeListener('logLevel', () => {
+            console.set(Config.values.logLevel);
+        });
         console.set(Config.values.logLevel);
     })();
 

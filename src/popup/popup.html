@@ -1,33 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter Code</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif; margin: 20px;
-        }
-        label, input, button {
-            display: block; width: 100%; margin-bottom: 10px;
-        }
-        input {
-            font-size: 1.2em; padding: 5px;
-        }
-        button {
-            padding: 8px; font-size: 1em;
-        }
-    </style>
-</head>
-<body>
-    <button id="openOnline" type="button">Open vs.dev Editor</button>
-    <h3>Connect to local editor</h3>
-    <form>
-        <label for="code">Code:</label>
-        <input type="text" id="code" maxlength="7" autofocus />
-        <button type="submit">Submit</button>
-    </form>
-    <div id="result"></div>
-    <script src="popup_code_input.js"></script>
-</body>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tampermonkey Editors</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="popup.js"></script>
+  </body>
 </html>

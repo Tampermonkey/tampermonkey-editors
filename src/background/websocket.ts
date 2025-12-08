@@ -8,20 +8,27 @@ export class LocalWebSocketClient {
     private resolveConnected!: (value: this) => void;
     private rejectConnected!: (reason?: Event | Error | string) => void;
     private messageListeners: Array<(msg: WebSocketIncomingMessage) => void> = [];
+    static g: LocalWebSocketClient | undefined;
+    public state: 'connecting' | 'open' | 'closed' | undefined;
 
     constructor(auth: string, port: number) {
+        if (LocalWebSocketClient.g) LocalWebSocketClient.g.close();
+        LocalWebSocketClient.g = this;
         const wsUrl = `ws://localhost:${port}`;
         this.connected = this._prepareConnection();
 
         let ws: WebSocket;
         try {
             ws = this.ws = new WebSocket(wsUrl);
+            this.state = 'connecting';
         } catch (err) {
             this.rejectConnected(err as Error);
             throw err;
         }
 
         ws.onopen = async () => {
+            this.state = 'open';
+
             const keepGoingAlarm = async (alarm: chrome.alarms.Alarm) => {
                 if (alarm.name !== 'KeepWebsocketAlive') return;
                 if (D) console.debug('Websocket keepAlive PING');
@@ -65,6 +72,7 @@ export class LocalWebSocketClient {
         };
 
         ws.onerror = (err) => {
+            this.state = 'closed';
             this.rejectConnected(err);
             console.error('WebSocket error:', err);
             chrome.alarms.clear('KeepWebsocketAlive');
@@ -102,6 +110,8 @@ export class LocalWebSocketClient {
         };
 
         ws.onclose = (event) => {
+            this.state = 'closed';
+
             let err = null;
             try{
                 this.messageListeners.forEach(fn => fn({ method: 'closed', reason: 'WebSocket connection closed' }));
@@ -130,6 +140,17 @@ export class LocalWebSocketClient {
         });
     }
 
+    public async close() {
+        await chrome.alarms.clear('KeepWebsocketAlive');
+
+        return this.connected.then(() => {
+            if (this.ws.readyState == WebSocket.OPEN) {
+                console.log('Closing WebSocket connection...');
+                this.ws.close();
+            }
+            return Promise.resolve();
+        });
+    }
 
     public listen(listener: (msg: WebSocketIncomingMessage) => void) {
         this.messageListeners.push(listener);
