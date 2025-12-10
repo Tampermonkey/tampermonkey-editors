@@ -198,6 +198,7 @@ const methods = {
 
         [
             { m: 'pack', a: false, r: true },
+            { m: 'scss', a: false, r: true },
             { m: 'manifest', a, r: true },
         ].some(e => {
             if (!e.r) return;
