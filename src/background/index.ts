@@ -8,15 +8,19 @@
 import '../../src/polyfills';
 import { logger as console } from '../shared/logger';
 import { IS_EVENTPAGE, IS_FIREFOX, IS_MV3 } from '../env';
+import { ExtensionRequestMessage, ExtensionResponseMessage } from '../types/extension';
+import { WebSocketIncomingMessage } from '../types/websocket';
 import Config from './config';
 import { findTm } from './find_tm';
 import Storage from './storage';
-import { hasHostPermission, requestHostPermission } from './host_permission';
 import { BackgroundToContent, ContentToBackground } from '../types/communication';
 import { ExternalRequest } from '../types/external';
+import { hasHostPermission } from './host_permission';
+import { LocalWebSocketClient } from './websocket';
 
 const MAIN_URL = 'https://vscode.dev/?connectTo=tampermonkey';
 const { runtime, action, tabs, webNavigation, scripting } = chrome;
+const D = true;
 
 const setForbidden = async (forbidden: boolean) => {
     /* eslint-disable @typescript-eslint/naming-convention */
@@ -58,7 +62,7 @@ const initWebNavigation = () => {
                     tabId,
                     frameIds: [ 0 ]
                 },
-                ...{ injectImmediately: true } as any,
+                ...{ injectImmediately: true },
                 world: 'ISOLATED'
             });
             scripting.executeScript({
@@ -69,7 +73,7 @@ const initWebNavigation = () => {
                     tabId,
                     frameIds: [ 0 ]
                 },
-                ...{ injectImmediately: true } as any,
+                ...{ injectImmediately: true },
                 world: IS_FIREFOX ? 'ISOLATED' : 'MAIN'
             });
         }
@@ -107,7 +111,7 @@ const init = async () => {
         initWebNavigation();
     }
 
-    const handleMessage = async (request: ContentToBackground, sendResponse: (response?: BackgroundToContent) => void): Promise<void> => {
+    const handleMessage = async (request: ContentToBackground, sendResponse: (response: BackgroundToContent) => void): Promise<void> => {
         if (lock) {
             await lock;
             return handleMessage(request, sendResponse);
@@ -115,7 +119,7 @@ const init = async () => {
             let resolve: () => void = () => null;
 
             lock = new Promise<void>(r => resolve = r);
-            lock.then(() => lock = undefined);
+            lock.finally(() => lock = undefined);
 
             const r = await findTm([ MAIN_URL ]);
 
@@ -141,22 +145,114 @@ const init = async () => {
         }
     };
 
-    runtime.onMessage.addListener((request, _sender, sendResponse) => {
-        handleMessage(request, sendResponse);
+    const setupWebSocketRelay = (wsClient: LocalWebSocketClient) => {
+        const allowedActions = ['list', 'get', 'set', 'patch'];
+
+        wsClient.listen(async (msg: WebSocketIncomingMessage) => {
+            if (D) console.debug('WebSocket message received:', msg);
+
+            if (!('action' in msg) || !allowedActions.includes(msg.action)) {
+                console.warn('Invalid action received from WebSocket client', msg);
+                return;
+            }
+
+            const m: ContentToBackground = { method: 'userscripts', args: {...msg } };
+
+            await handleMessage(m, (response?: ExtensionResponseMessage) => {
+                try {
+                    wsClient.send({ id: msg.messageId, response });
+                } catch (e) {
+                    console.error('Response send error:', e);
+                }
+            });
+        });
+    };
+
+    runtime.onMessage.addListener((request: ExtensionRequestMessage, sender, sendResponse: (r: ExtensionResponseMessage) => void): true | undefined => {
+        if (D) console.log(request.method, request);
+        switch (request.method){
+            case 'connectWebSocket': {
+                if (sender.id !== runtime.id) {
+                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
+                    return;
+                }
+
+                if ('args' in request) {
+                    if (D) console.log('Connecting WebSocket client with request:', request);
+                    const { authorization, port } = request.args || {};
+                    if (!authorization || !port) {
+                        sendResponse({ ok: false, error: 'Missing authorization or port' });
+                        return;
+                    }
+                    const socket = new LocalWebSocketClient(authorization, port);
+                    setupWebSocketRelay(socket);
+                    (async () => {
+                        try {
+                            await socket.connected;
+                            if (D) console.log(`WebSocket client connected with auth: ${authorization}, port: ${port}`);
+                            sendResponse({ ok: true });
+                        } catch (e: any) {
+                            console.error('WebSocket connection error:', e);
+                            sendResponse({ ok: false, error: e?.message || e?.reason || e });
+                        }
+                    })();
+                    break;
+                } else {
+                    const g = LocalWebSocketClient.g;
+
+                    if (!g) {
+                        sendResponse({ ok: null });
+                    } else if (g.state !== 'open') {
+                        sendResponse({ ok: false, error: 'No WebSocket client connected' });
+                    } else {
+                        sendResponse({ ok: true });
+                    }
+                    return;
+                }
+            }
+            case 'openOnlineEditor': {
+                if (sender.id !== runtime.id) {
+                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
+                    return;
+                }
+
+                openOnlineEditor();
+                return
+            }
+            case 'setOption': {
+                if (sender.id !== runtime.id) {
+                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
+                    return;
+                }
+                const { name, value } = request.args;
+                (async () => {
+                    await Config.setValue(name, value);
+                    sendResponse({ ok: true });
+                })();
+                break;
+            }
+            case 'getOption': {
+                if (sender.id !== runtime.id) {
+                    sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
+                    return;
+                }
+                const { name } = request.args;
+                sendResponse({ name, value: Config.values[name] });
+                break;
+            }
+            default: {
+                handleMessage(request, sendResponse);
+            }
+        }
         return true;
     });
 
     let hhp: boolean | undefined;
-    action.onClicked.addListener(async (_details) => {
-        void(runtime.lastError);
+    const openOnlineEditor = async () => {
+        hhp = hhp || await hasHostPermission(MAIN_URL);
+        setForbidden(!hhp);
         if (!hhp) {
-            const granted = await requestHostPermission();
-            if (granted) {
-                hhp = granted;
-                setForbidden(!hhp);
-            } else {
-                return;
-            }
+            throw new Error('Need website permission to find tab with url ' + MAIN_URL);
         }
 
         tabs.query({ url: MAIN_URL + '*' }, info => {
@@ -166,13 +262,15 @@ const init = async () => {
                 tabs.create({ url: MAIN_URL, active: true }, () => runtime.lastError);
             }
         });
-
-    });
+    };
 
     // eslint-disable-next-line no-async-promise-executor
     let lock: Promise<any> | undefined = (async () => {
         await Storage.init();
         await Config.init();
+        Config.addChangeListener('logLevel', () => {
+            console.set(Config.values.logLevel);
+        });
         console.set(Config.values.logLevel);
     })();
 
@@ -197,5 +295,3 @@ if (IS_EVENTPAGE) {
 } else {
     throw new Error('This should not happen');
 }
-
-

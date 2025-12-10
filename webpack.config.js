@@ -10,6 +10,7 @@ import { getWebpackDefineVariables } from './build_sys/helpers.js';
 import { LicenseWebpackPlugin } from 'license-webpack-plugin';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { VueLoaderPlugin } from 'vue-loader';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,6 +30,7 @@ const getConfigs = () => {
 
     const config = {
         plugins: [
+            new VueLoaderPlugin(),
             new webpack.SourceMapDevToolPlugin(Object.assign({
                 filename: 'sourcemaps/[name].js.map',
                 // publicPath: 'file://' + path.resolve(path.join(__dirname, 'out/sourcemaps')) + '/',
@@ -103,14 +105,44 @@ const getConfigs = () => {
         module: {
             rules: [
                 {
-                    test: /\.tsx?$/,
-                    use: 'ts-loader',
+                    test: /\.vue$/,
                     exclude: /node_modules/,
+                    use: {
+                        loader: 'vue-loader',
+                    }
+                },
+                {
+                    test: /\.css$/,
+                    sideEffects: true,
+                    use: [
+                      'vue-style-loader',
+                      'css-loader',
+                    ],
+                },
+                {
+                    test: /\.scss$/,
+                    sideEffects: true,
+                    use: [
+                        'vue-style-loader',
+                        'css-loader',
+                        'sass-loader'
+                    ]
+                },
+                {
+                    test: /\.tsx?$/,
+                    loader: 'ts-loader',
+                    exclude: /node_modules/,
+                    options: {
+                        appendTsSuffixTo: [/\.vue$/]
+                    },
                 }
             ]
         },
         resolve: {
-            extensions: [".tsx", ".ts", ".js"]
+            extensions: [".tsx", ".ts", ".js", ".vue"],
+            alias: {
+                vue: 'vue/dist/vue.esm-bundler.js'
+            },
         },
         mode: 'production',
         performance: {
@@ -193,13 +225,18 @@ const getConfigs = () => {
                     {
                         from: './LICENSE',
                         to: 'rel/'
+                    },
+                    {
+                        from: './src/popup/popup.html',
+                        to: 'rel/popup.html'
                     }
                 ]
             })
         );
 
         c.entry = {
-            'background': './src/background/index.ts'
+            'background': './src/background/index.ts',
+            'popup': './src/popup/main.ts',
         };
 
         return c;

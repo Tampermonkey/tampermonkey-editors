@@ -18,7 +18,8 @@
             "24": "images/icon24.png",
             "32": "images/icon32.png"
         },
-        "default_title": "Tampermonkey Editors"
+        "default_title": "Tampermonkey Editors",
+        "default_popup": "popup.html"
     },
     "icons": {
         "16": "images/icon.png",
@@ -38,6 +39,7 @@
         ]
     },
     "permissions": [
+        "alarms",
         "tabs",
         "webNavigation",
         "storage",

@@ -1,7 +1,7 @@
 // #region content<->page
 
 import { Bridge, BridgeMessage } from '../tab/bridge';
-import { CreateExternalRequest, GetExternalRequest, GetExternalResponse, ListExternalRequest, ListExternalResponse, OptionsExternalRequest, SetExternalRequest, UpdateExternalResponse, UserscriptsRequest } from './external';
+import { CreateExternalRequest, DeleteExternalRequest, GetExternalRequest, GetExternalResponse, ListExternalRequest, ListExternalResponse, OptionsExternalRequest, SetExternalRequest, UpdateExternalResponse, UserscriptsRequest } from './external';
 import { OmitFrom } from './shared';
 
 export type InternalErrorResponse = {
@@ -24,7 +24,8 @@ export type ContentToBackground = BridgeMessage<
         ListExternalRequest |
         GetExternalRequest |
         SetExternalRequest |
-        CreateExternalRequest,
+        CreateExternalRequest |
+        DeleteExternalRequest,
         UserscriptsRequest
     >
 >;
@@ -35,11 +36,12 @@ export type BackgroundToContent =
     GetExternalRequest |
     SetExternalRequest |
     CreateExternalRequest |
+    DeleteExternalRequest |
     InternalErrorResponse;
 // #endregion
 
 export type CoPaBridge<S, R> = Bridge<OmitFrom<S, UserscriptsRequest>, R>;
-export type PaCoBridge<S, R> = Bridge<S, BridgeMessage<'userscripts', OmitFrom<R, UserscriptsRequest>>>;
+export type PaCoBridge<S extends Record<string, any>, R> = Bridge<S, BridgeMessage<'userscripts', OmitFrom<R, UserscriptsRequest>>>;
 
 export type PageContentBridge = CoPaBridge<ListExternalRequest, ListExternalResponse | InternalErrorResponse> & CoPaBridge<GetExternalRequest, GetExternalResponse | InternalErrorResponse> & CoPaBridge<SetExternalRequest, UpdateExternalResponse | InternalErrorResponse>;
 export type ContentPageBridge = PaCoBridge<GetExternalResponse | ListExternalResponse | UpdateExternalResponse | InternalErrorResponse, ListExternalRequest | GetExternalRequest | SetExternalRequest>;

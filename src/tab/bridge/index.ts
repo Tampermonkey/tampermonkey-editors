@@ -3,7 +3,7 @@ import { createBridge as createEventBridge} from './event_bridge';
 
 export type Bridge<S extends Record<string, any>, R> = {
     init: (new_id?: string) => void;
-    send: <T = S, M = R>(method: string, args?: NoInfer<T>, cb?: ((response: M) => void) | null) => void;
+    send: <T extends Record<string, any> = S, M = R>(method: string, args?: NoInfer<T>, cb?: ((response: M) => void) | null) => void;
     setMessageListener: (m: MessageListener<NoInfer<R>, S>) => void;
     cleanup: () => void;
 };
