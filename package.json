@@ -44,7 +44,6 @@
     "css-loader": "^7.1.2",
     "eslint": "^7.30.0",
     "eslint-plugin-es": "git+https://git@github.com/derjanb/eslint-plugin-es",
-    "eslint-plugin-tampermonkey": "file:eslint",
     "glob": "^7.1.6",
     "license-webpack-plugin": "^4.0.2",
     "nodemon": "^2.0.20",

@@ -5,7 +5,6 @@ const default_rules = {
         'warn',
         'ForInStatement'
     ],
-    'tampermonkey/no-global-object-access': [ 'warn', { aggressive: true } ],
     'indent': [
         'warn', 4,
         {
@@ -18,11 +17,9 @@ const default_rules = {
 };
 
 const extension_page_rules = {
-    'tampermonkey/no-global-object-access': 'off'
 };
 
 const content_script_rules = {
-    'tampermonkey/no-global-object-access': 'off'
 };
 
 const unsafe_env_ts = [
@@ -88,7 +85,7 @@ const extends_ts = [
 ];
 
 module.exports = {
-    plugins: [ 'es' , 'tampermonkey' ],
+    plugins: [ 'es' ],
     env: {
         browser: true,
         es6: true

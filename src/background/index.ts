@@ -217,7 +217,7 @@ const init = async () => {
                 }
 
                 openOnlineEditor();
-                return
+                return;
             }
             case 'setOption': {
                 if (sender.id !== runtime.id) {
