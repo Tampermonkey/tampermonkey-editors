@@ -37,7 +37,7 @@
             <div class="card">
                 <h2 class="card-title">Local editor via WebSocket</h2>
                 <p class="card-text">
-                    Paste or type your one-time code to connect to the local editor.
+                    Paste or type your one-time code to connect to the <a href="https://marketplace.visualstudio.com/items?itemName=brunoais.tampermonkey-fs" target="_blank">local editor</a>.
                 </p>
 
                 <form class="code-form" @submit.prevent="submit">
