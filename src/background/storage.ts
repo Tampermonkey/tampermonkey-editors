@@ -248,7 +248,7 @@ const chromeStorage: StorageImplementation = (() => {
                         }
                     });
                 };
-                await new Promise<void>(resolve => storage.local.get(null, (o) => {
+                await new Promise<void>(resolve => storage.local.get(null, (o: LocalStorageObject) => {
                     initCache(o);
                     resolve();
                 }));

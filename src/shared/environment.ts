@@ -1,5 +1,3 @@
-/* eslint-disable tampermonkey/no-global-object-access */
-
 import { setSleepyTimeout } from './utils';
 
 export const getDocumentCookie = (): string => {

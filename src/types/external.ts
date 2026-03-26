@@ -1,3 +1,5 @@
+// Tampermonkey extension message types
+
 export type Request = {
     origin?: string
 };
@@ -52,7 +54,7 @@ export type ListExternalResponse = {
 };
 export type GetExternalRequest = UserscriptsRequest & {
     action: 'get',
-    ifNotModifiedSince?: number,
+    ifModifiedSince?: number,
     path: string
 };
 export type GetExternalResponse = {
