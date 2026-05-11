@@ -78,31 +78,37 @@ export class LocalWebSocketClient {
             chrome.alarms.clear('KeepWebsocketAlive');
         };
 
+        let authOK = false;
         ws.onmessage = (event) => {
             try {
                 const data: { method: string; token: string } = JSON.parse(event.data);
-                if (data.method !== 'auth' || data.token !== auth[1]) {
-                    console.error('WebSocket authentication failed', data.method, port);  // Not mentioning the auth purposefully
-                    this.rejectConnected('Server Auth failed');
-                    ws.close();
-                }
 
-                ws.onmessage = (event) => {
+                if (!authOK) {
+                    if (data.method !== 'auth' || data.token !== auth[1]) {
+                        console.error('WebSocket authentication failed', data.method, port);  // Not mentioning the auth purposefully
+                        this.rejectConnected('Server Auth failed');
+                        ws.close();
+                        return;
+                    }
+
+                    authOK = true;
+                    ws.send(JSON.stringify({ method: 'authOK' }));
+
+                    this.resolveConnected(this);
+                    console.log('WebSocket: ready for messaging:');
+                } else {
                     let msg: string | WebSocketIncomingMessage = event.data;
                     try {
                         msg = JSON.parse(event.data) as WebSocketIncomingMessage;
                     } catch {}
+
                     if (data.method === 'ping') {
                         if (D) console.debug('pong!');
                         return ws.send(JSON.stringify({ method: 'pong' }));
                     }
+
                     this.messageListeners.forEach(fn => fn(msg as WebSocketIncomingMessage));
-                };
-
-                ws.send(JSON.stringify({ method: 'authOK' }));
-
-                this.resolveConnected(this);
-                console.log('WebSocket: ready for messaging:');
+                }
             } catch (e) {
                 this.rejectConnected(e as Error);
                 throw e;
@@ -111,7 +117,7 @@ export class LocalWebSocketClient {
 
         ws.onclose = (event) => {
             this.state = 'closed';
-
+            authOK = false;
             let err = null;
             try{
                 this.messageListeners.forEach(fn => fn({ method: 'closed', reason: 'WebSocket connection closed' }));
