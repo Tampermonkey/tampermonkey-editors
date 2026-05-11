@@ -8,6 +8,7 @@ export interface WebSocketMessage {
 
 export interface WebSocketMethodMessage extends WebSocketMessage {
     method: 'authOK' | 'ping' | 'pong';
+    messageId: string;
 }
 
 export interface WebSocketAuthMessage extends WebSocketMessage {

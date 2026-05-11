@@ -146,13 +146,23 @@ const init = async () => {
     };
 
     const setupWebSocketRelay = (wsClient: LocalWebSocketClient) => {
-        const allowedActions = ['list', 'get', 'set', 'patch'];
+        const allowedActions = [ 'list', 'get', 'set', 'patch', 'put', 'delete' ];
 
         wsClient.listen(async (msg: WebSocketIncomingMessage) => {
             if (D) console.debug('WebSocket message received:', msg);
 
             if (!('action' in msg) || !allowedActions.includes(msg.action)) {
                 console.warn('Invalid action received from WebSocket client', msg);
+
+                try {
+                    wsClient.send({
+                        id: 'messageId' in msg ? msg.messageId : undefined,
+                        response: { error: { number: 405, message: 'Method Not Allowed' } }
+                    });
+                } catch (e) {
+                    console.error('Response send error:', e);
+                }
+
                 return;
             }
 

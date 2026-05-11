@@ -64,15 +64,18 @@ export type GetExternalResponse = {
     error?: ExternalRequestError
 };
 type UpdateExternalRequest = UserscriptsRequest & {
-    path: string,
     value: string
     lastModified?: number
 };
 export type SetExternalRequest = UpdateExternalRequest & {
-    action: 'patch'
+    action: 'patch',
+    path: string
 };
 export type CreateExternalRequest = UpdateExternalRequest & {
     action: 'put'
+};
+export type CreateExternalResponse = UpdateExternalResponse & {
+    path: string
 };
 export type UpdateExternalResponse = {
     messageId: string,
