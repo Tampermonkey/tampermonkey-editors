@@ -146,7 +146,7 @@ const init = async () => {
     };
 
     const setupWebSocketRelay = (wsClient: LocalWebSocketClient) => {
-        const allowedActions = [ 'list', 'get', 'set', 'patch', 'put', 'delete' ];
+        const allowedActions = [ 'options', 'list', 'get', 'set', 'patch', 'put', 'delete' ];
 
         wsClient.listen(async (msg: WebSocketIncomingMessage) => {
             if (D) console.debug('WebSocket message received:', msg);
