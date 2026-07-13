@@ -21,18 +21,11 @@ export interface WebSocketClosedMessage extends WebSocketMessage {
     reason: string;
 }
 
-export interface WebSocketActionMessage extends WebSocketMessage {
-    action: 'list' | 'get' | 'set' | 'patch';
-    messageId: string;
-    [key: string]: unknown;
-}
-
 export type WebSocketIncomingMessage =
     | WebSocketAuthMessage
     | WebSocketMethodMessage
     | WebSocketClosedMessage
     | ExternalRequest;
-
 
 export interface WebSocketResponse {
     id: string;
