@@ -61,6 +61,25 @@
             </div>
         </div>
 
+        <div class="col-xs-12">
+            <div class="card">
+                <h2 class="card-title">Local MCP connection</h2>
+                <p class="card-text">
+                    Connect automatically after browser restarts using a registered local helper.
+                    Requires <a href="https://github.com/Tampermonkey/tampermonkey-mcp#native-messaging" target="_blank" rel="noopener">one-time setup</a>.
+                    Access is limited to existing script source.
+                </p>
+                <label class="field">
+                    <input type="checkbox" v-model="nativeWrite" /> Allow updates to existing scripts
+                </label>
+                <div class="code-form-actions">
+                    <button type="button" class="btn btn-secondary" @click="enableNative">Enable / apply</button>
+                    <button type="button" class="btn btn-secondary" @click="disableNative">Disable and forget</button>
+                </div>
+                <p class="card-text">{{ nativeMessage }}</p>
+            </div>
+        </div>
+
         <!-- Status -->
         <div class="col-xs-12">
             <div class="status-card">
@@ -99,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import type { GetOptionRequest, GetOptionResponse, SetOptionRequest, WebSocketConnectResponse } from '../types/extension';
 import { ExtensionConfig } from '../background/config';
 import { LogLevel } from '../shared/logger';
@@ -107,6 +126,35 @@ import { sleep } from '../shared/utils';
 
 const MIN_PORT_OFFSET = 1024;
 const code = ref('');
+const nativeWrite = ref(false);
+const nativeMessage = ref('Native connection is disabled.');
+
+let nativeTimer: number | undefined;
+function showNative(response: WebSocketConnectResponse, syncWrite = false) {
+    if (!response?.ok || !response.native) {
+        nativeMessage.value = response?.error ?? 'Native connection status unavailable.';
+        return;
+    }
+    if (syncWrite) nativeWrite.value = response.native.write;
+    nativeMessage.value = response.native.connected ? 'Connected to the local helper.' :
+        response.native.enabled ? 'Enabled. Waiting for the local helper; reconnecting automatically.' : 'Native connection is disabled.';
+}
+
+async function enableNative() {
+    try {
+        // Permission request must originate in this popup's user gesture.
+        const permitted = await chrome.permissions.request({ permissions: ['nativeMessaging'] });
+        if (!permitted) { nativeMessage.value = 'Native messaging permission was not granted.'; return; }
+        runtime.sendMessage({ method: 'nativeConnection', args: { enabled: true, write: nativeWrite.value } }, (response: WebSocketConnectResponse) => showNative(response, true));
+    } catch { nativeMessage.value = 'Could not enable the native connection.'; }
+}
+
+async function disableNative() {
+    runtime.sendMessage({ method: 'nativeConnection', args: { enabled: false, write: false } }, (response: WebSocketConnectResponse) => {
+        showNative(response, true);
+        if (response?.ok) void chrome.permissions.remove({ permissions: ['nativeMessaging'] });
+    });
+}
 
 // --- WebSocket status handling ---
 type Status = 'idle' | 'connecting' | 'connected' | 'error';
@@ -273,7 +321,10 @@ onMounted(async () => {
 
     loadLogLevel();
     getState();
+    runtime.sendMessage({ method: 'nativeConnection' }, (response: WebSocketConnectResponse) => showNative(response, true));
+    nativeTimer = window.setInterval(() => runtime.sendMessage({ method: 'nativeConnection' }, showNative), 1000);
 });
+onUnmounted(() => window.clearInterval(nativeTimer));
 </script>
 
 <style lang="scss">

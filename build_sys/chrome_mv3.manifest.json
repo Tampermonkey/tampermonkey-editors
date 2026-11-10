@@ -33,6 +33,7 @@
         "storage",
         "scripting"
     ],
+    "optional_permissions": ["nativeMessaging"],
     "host_permissions": [
         "https://*.vscode.dev/*"
     ]

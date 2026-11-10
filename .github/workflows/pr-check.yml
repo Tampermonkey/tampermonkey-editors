@@ -14,7 +14,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 22.x
           cache: npm
 
       - name: Install dependencies
@@ -25,6 +25,9 @@ jobs:
 
       - name: Check
         run: npm run check
+
+      - name: Native messaging tests
+        run: npm test
 
       - name: Build
         run: npm run build

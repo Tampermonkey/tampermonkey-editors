@@ -18,6 +18,7 @@ export interface MethodRequest {
 export type ExtensionRequestMessage =
     | MethodRequest
     | WebSocketConnectRequest
+    | { method: 'nativeConnection'; args?: { enabled: boolean; write: boolean } }
     | SetOptionRequest
     | GetOptionRequest
     | ContentToBackground;
@@ -25,6 +26,7 @@ export type ExtensionRequestMessage =
 export interface WebSocketConnectResponse {
     ok: boolean | null;
     error?: string;
+    native?: { enabled: boolean; connected: boolean; write: boolean };
 }
 
 export interface SetOptionRequest<T extends ConfigKeys = never> {
