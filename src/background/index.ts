@@ -17,6 +17,7 @@ import { BackgroundToContent, ContentToBackground } from '../types/communication
 import { ExternalRequest } from '../types/external';
 import { hasHostPermission } from './host_permission';
 import { LocalWebSocketClient } from './websocket';
+import { NativeEditor, NATIVE_HOST, isNativePopup } from './native_editor';
 
 const MAIN_URL = 'https://vscode.dev/?connectTo=tampermonkey';
 const { runtime, action, tabs, webNavigation, scripting } = chrome;
@@ -178,9 +179,57 @@ const init = async () => {
         });
     };
 
+    const grantKey = 'nativeEditorGrant';
+    const nativeEditor = new NativeEditor({
+        load: async () => (await chrome.storage.local.get(grantKey))[grantKey],
+        save: async grant => {
+            if (grant) await chrome.storage.local.set({ [grantKey]: grant });
+            else await chrome.storage.local.remove(grantKey);
+        },
+        permitted: () => chrome.permissions.contains({ permissions: ['nativeMessaging'] }),
+        connect: () => {
+            const port = runtime.connectNative(NATIVE_HOST);
+            // Consume the browser's diagnostic without logging message/source bodies.
+            port.onDisconnect.addListener(() => { void runtime.lastError });
+            return port;
+        },
+        schedule: async (name, minutes) => { await chrome.alarms.create(name, { delayInMinutes: minutes }) },
+        clear: name => chrome.alarms.clear(name),
+        execute: command => new Promise(resolve => {
+            void handleMessage({ method: 'userscripts', args: { ...command } }, resolve);
+        })
+    });
+    const restoreNative = () => { void nativeEditor.restore().catch(() => undefined) };
+    runtime.onStartup.addListener(restoreNative);
+    chrome.alarms.onAlarm.addListener(alarm => { void nativeEditor.onAlarm(alarm.name)?.catch(() => undefined) });
+    chrome.permissions.onRemoved.addListener(permissions => {
+        if (permissions.permissions?.includes('nativeMessaging')) void nativeEditor.disable().catch(() => undefined);
+    });
+
     runtime.onMessage.addListener((request: ExtensionRequestMessage, sender, sendResponse: (r: ExtensionResponseMessage) => void): true | undefined => {
         if (D) console.log(request.method, request);
         switch (request.method){
+            case 'nativeConnection': {
+                // A page relayed through our content script also has our ID.
+                // Only the extension popup may grant or expand native access.
+                if (!isNativePopup(sender, runtime)) {
+                    sendResponse({ ok: false, error: 'Native access can only be changed in the extension popup.' });
+                    return;
+                }
+                void (async () => {
+                    try {
+                        if (request.args) {
+                            if (typeof request.args.enabled !== 'boolean' || typeof request.args.write !== 'boolean') throw new Error('Invalid native permission request');
+                            if (request.args.enabled) await nativeEditor.enable(request.args.write);
+                            else await nativeEditor.disable();
+                        }
+                        sendResponse({ ok: true, native: nativeEditor.status() });
+                    } catch {
+                        sendResponse({ ok: false, error: 'Could not update the native connection.', native: nativeEditor.status() });
+                    }
+                })();
+                break;
+            }
             case 'connectWebSocket': {
                 if (sender.id !== runtime.id) {
                     sendResponse({ ok: false, error: `Invalid sender id ${sender.id}` });
@@ -291,6 +340,7 @@ const init = async () => {
 
     await lock;
     lock = undefined;
+    restoreNative();
 
     console.log('Tampermonkey Editors initialization done');
 };

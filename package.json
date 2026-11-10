@@ -16,6 +16,7 @@
     "lint": "node Makefile.js lint",
     "lint:debug": "node --inspect-brk ./node_modules/eslint/bin/eslint.js --",
     "check": "node Makefile.js check",
+    "test": "node --test test/native-editor.test.mjs",
     "diff:hl": "git diff --diff-algorithm=minimal -M10 HEAD -w | delta --color-only --minus-style='white #770000' --minus-emph-style='white #CC0000' | sed 's/\\[0K//'",
     "build": "node Makefile.js build",
     "build:watch": "nodemon --watch src --ext \"ts,json,js\" --exec \"npm run build\"",
